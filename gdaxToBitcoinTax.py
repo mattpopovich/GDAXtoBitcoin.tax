@@ -26,15 +26,20 @@ class BtaxTrade:
 	rows = ['Date', 'Action', 'Source', 'Symbol', 'Volume', 'Price', 'Currency', 'Fee']
 
 
-	def __init__(self): 
-		self.date = ''
-		self.action = ''
-		self.symbol = ''
-		self.volume = 0 
-		self.currency = 'USD'
-		self.price = ''	# Will leave blank for lookup
-		self.fee = 0
-		self.feeCurrency = '' 	# Will ignore in .csv output
+	def __init__(self, date, action, symbol, volume, currency, price, fee, feeCurrency): 
+		self.date = date
+		self.action = action
+		self.symbol = symbol
+		self.volume = volume
+		self.currency = currency
+		self.price = price	# Will leave blank for lookup
+		self.fee = fee
+		self.feeCurrency = feeCurrency 	# Will ignore in .csv output
+
+	def __str__(self): 
+		return str(self.date + ',' + self.action + ',' + self.symbol + ',' + self.volume + ',' + self.currency +
+				   self.price + ',' + self.fee + ',' + self.feeCurrency)
+
 
 class GdaxTrade: 
 
@@ -73,7 +78,7 @@ with open(inFilename, 'rb') as csvfile:
 	for row in spamreader: 
 		rowOne = GdaxTrade(row[GdaxTrade.rows[0]], row[GdaxTrade.rows[1]], row[GdaxTrade.rows[2]], row[GdaxTrade.rows[3]], 
 						   row[GdaxTrade.rows[4]], row[GdaxTrade.rows[5]], row[GdaxTrade.rows[6]], row[GdaxTrade.rows[7]])
-		fee = 0 
+		fee = '0' 
 
 		if(row['TYPE'] == 'transfer'):
 			rowCounter += 1 
@@ -85,7 +90,7 @@ with open(inFilename, 'rb') as csvfile:
 		#		rowTwo		USD 	match
 		#		rowThree	BTC 	match
 		if(row['TYPE'] == 'fee'): 
-			fee = abs(float(row['AMOUNT']))
+			fee = str(abs(float(row['AMOUNT'])))
 			if(row['CURRENCY'] != 'USD'): 
 				sys.exit("Fee was in something other than USD!")
 
@@ -112,15 +117,19 @@ with open(inFilename, 'rb') as csvfile:
 			print btcTrade
 			rowCounter += 2 
 
+
 		print "tradeCounter: " + str(tradeCounter) 
 		tradeCounter += 1 
 
 		print "rowCounter: " + str(rowCounter)
 
+		action = 'SELL' if usdTrade.amount > 0 else 'BUY'
+		volume = str(abs(float(btcTrade.amount)))
+		price = str(abs(float(btcTrade.equivUsd)) / abs(float(btcTrade.amount)))
 
-		# newTrade = BtaxTrade()
-
-
+		newTrade = BtaxTrade(usdTrade.timestamp, action, 'Online', btcTrade.currency, volume, price, usdTrade.currency, fee)
+		print newTrade
+		finalTrades.append(newTrade)
 
 
 
