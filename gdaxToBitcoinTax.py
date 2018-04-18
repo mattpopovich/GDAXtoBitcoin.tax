@@ -24,6 +24,12 @@ class BtaxTrade:
 	# FeeCurrency = currency of fee if different than Currency
 
 	rows = ['Date', 'Action', 'Source', 'Symbol', 'Volume', 'Price', 'Currency', 'Fee']
+	@staticmethod
+	def header():
+		ret = '' 
+		for i in range(0, len(BtaxTrade.rows)-1):
+			ret += BtaxTrade.rows[i] + ','
+		return ret + BtaxTrade.rows[len(BtaxTrade.rows)-1]
 
 
 	def __init__(self, date, action, symbol, volume, currency, price, fee, feeCurrency): 
@@ -38,7 +44,7 @@ class BtaxTrade:
 
 	def __str__(self): 
 		return str(self.date + ',' + self.action + ',' + self.symbol + ',' + self.volume + ',' + self.currency +
-				   self.price + ',' + self.fee + ',' + self.feeCurrency)
+				   ',' + self.price + ',' + self.fee + ',' + self.feeCurrency)
 
 
 class GdaxTrade: 
@@ -67,11 +73,16 @@ import sys # for sys.exit()
 # Defines
 # inFilename = 'GDAXhistoryForBitcoinTax.txt'
 inFilename = '/Users/mattpopovich/Documents/Coinbase/GDAXhistoryForBitcoinTax.txt'
+outFilename = '/Users/mattpopovich/Documents/Coinbase/BitcoinTax.txt'
+outFile = open(outFilename, 'w')
 finalTrades = []
 tradeCounter = 0 
 rowCounter = 1
 
 # Main program
+# print BtaxTrade.header()
+outFile.write(BtaxTrade.header() + '\n')
+
 with open(inFilename, 'rb') as csvfile: 
 	# spamreader = csv.reader(csvfile, delimiter=',')
 	spamreader = csv.DictReader(csvfile)
@@ -82,7 +93,7 @@ with open(inFilename, 'rb') as csvfile:
 
 		if(row['TYPE'] == 'transfer'):
 			rowCounter += 1 
-			print "rowCounter: " + str(rowCounter)
+			# print "rowCounter: " + str(rowCounter)
 			continue # Skip this row 
 
 		# If there was a fee applicable in the trade, the order of rows will be: 
@@ -103,9 +114,9 @@ with open(inFilename, 'rb') as csvfile:
 								 row[GdaxTrade.rows[3]], row[GdaxTrade.rows[4]], row[GdaxTrade.rows[5]],
 								 row[GdaxTrade.rows[6]], row[GdaxTrade.rows[7]])
 
-			print rowOne
-			print usdTrade
-			print btcTrade
+			# print rowOne
+			# print usdTrade
+			# print btcTrade
 			rowCounter += 3 
 		else: 
 			usdTrade = rowOne
@@ -113,22 +124,23 @@ with open(inFilename, 'rb') as csvfile:
 			btcTrade = GdaxTrade(row[GdaxTrade.rows[0]], row[GdaxTrade.rows[1]], row[GdaxTrade.rows[2]], 
 								 row[GdaxTrade.rows[3]], row[GdaxTrade.rows[4]], row[GdaxTrade.rows[5]],
 								 row[GdaxTrade.rows[6]], row[GdaxTrade.rows[7]])
-			print usdTrade
-			print btcTrade
+			# print usdTrade
+			# print btcTrade
 			rowCounter += 2 
 
 
-		print "tradeCounter: " + str(tradeCounter) 
+		# print "tradeCounter: " + str(tradeCounter) 
 		tradeCounter += 1 
 
-		print "rowCounter: " + str(rowCounter)
+		# print "rowCounter: " + str(rowCounter)
 
-		action = 'SELL' if usdTrade.amount > 0 else 'BUY'
+		action = 'SELL' if float(usdTrade.amount) > 0 else 'BUY'
 		volume = str(abs(float(btcTrade.amount)))
 		price = str(abs(float(btcTrade.equivUsd)) / abs(float(btcTrade.amount)))
 
 		newTrade = BtaxTrade(usdTrade.timestamp, action, 'Online', btcTrade.currency, volume, price, usdTrade.currency, fee)
-		print newTrade
+		# print newTrade
+		outFile.write(str(newTrade) + '\n')
 		finalTrades.append(newTrade)
 
 
